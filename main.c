@@ -2,9 +2,8 @@
 #include <stdlib.h>
 
 /*
- * Main source code file for the smallsh C program.
+ * Entry point to the smallsh C program.
  */
-
 int main(void) {
     Command curr_cmd;
 
@@ -12,7 +11,7 @@ int main(void) {
         curr_cmd = parse_command();
 
         // parse_command() returns NULL when i/o redirection is followed by
-        // command arguments.
+        // command arguments, when the entry is blank, and when it is a comment.
         if (curr_cmd == NULL) {
             continue;
         }

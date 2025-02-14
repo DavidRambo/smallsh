@@ -57,6 +57,17 @@ Command parse_command(void) {
     // Tokenize input into commands.
     char *cmd_tok_ptr;
     char *token = strtok_r(input, " \n", &cmd_tok_ptr);
+
+    // Check for blank line.
+    if (token == NULL) {
+        return NULL;
+    }
+
+    // Check for comment, which begins with a hash.
+    if (strncmp(token, "#", 1) == 0) {
+        return NULL;
+    }
+
     while (token != NULL) {
         if (strcmp(token, "<") == 0) {
             // Redirect stdin.
