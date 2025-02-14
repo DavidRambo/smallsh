@@ -18,5 +18,6 @@ typedef struct command_entry *Command;
 
 Command parse_command(void);
 int print_command(Command);
+void process_command(Command);
 
 #endif

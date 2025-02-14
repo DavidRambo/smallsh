@@ -23,6 +23,8 @@ int main(void) {
         }
 #endif
 
+        process_command(curr_cmd);
+
         free(curr_cmd); // Free memory before parsing another command.
     }
 

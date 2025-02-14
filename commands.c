@@ -124,3 +124,37 @@ int print_command(Command cmd) {
 
     return EXIT_SUCCESS;
 }
+
+/*
+ * Dispatcher function for running a parsed command.
+ *
+ * First checks whether the command is one of smallsh's three built-ins:
+ *  - exit : exits the shell, killing any processes or jobs it has started
+ *  - cd : changes the working directory, using absolute or relative paths
+ *  - status : prints either the exit status or the terminating signal of the
+ *      last foreground process run by smallsh
+ *
+ *  No i/o redirection, background argument is ignored, no exit status is set.
+ *
+ *  If the command is not a built-in, then it sends the command to a generic
+ *  execution function.
+ */
+void process_command(Command cmd) {
+
+    // Check for built-in command and process if so.
+    if (strcmp(cmd->argv[0], "exit") == 0) {
+        // TODO: Kill running processes and jobs.
+        // kill_all();
+        exit(EXIT_SUCCESS);
+    }
+
+    if (strcmp(cmd->argv[0], "cd") == 0) {
+        // TODO: change directory
+    }
+
+    if (strcmp(cmd->argv[0], "status") == 0) {
+        // TODO: change directory
+    }
+
+    // TODO: Not a built-in, so send to general execution function.
+}
