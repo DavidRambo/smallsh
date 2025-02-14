@@ -9,8 +9,8 @@
 
 #define PROMPT ": "
 
-// Incomplete type to encapculate its data structure.
-// The struct is implemented in the C source code file.
+// Incomplete type to encapsulate its data structure.
+// The struct is implemented in commands.c.
 struct command_entry;
 
 // Client code interfaces with the command_entry struct through its pointer.

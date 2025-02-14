@@ -84,6 +84,9 @@ Command parse_command(void) {
         } else if (!args_done) {
             // Add to list of arguments.
             cmd->argv[cmd->argc++] = strdup(token);
+            // cmd->argc tracks the cmd->argv subscript for the current token,
+            // incrementing so that it reflects the total number of tokens
+            // stored.
         } else {
             // More command arguments were received after redirection.
             printf("Error: command arguments must precede input/output "
@@ -142,7 +145,7 @@ int print_command(Command cmd) {
  */
 void process_command(Command cmd) {
 
-    // Check for built-in command and process if so.
+    // Check for built-in commands.
     if (strcmp(cmd->argv[0], "exit") == 0) {
         // TODO: Kill running processes and jobs.
         // kill_all();
@@ -154,7 +157,7 @@ void process_command(Command cmd) {
     }
 
     if (strcmp(cmd->argv[0], "status") == 0) {
-        // TODO: change directory
+        // TODO: Display status of last foreground process via stdout.
     }
 
     // TODO: Not a built-in, so send to general execution function.
