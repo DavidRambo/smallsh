@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "builtins.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,7 +150,7 @@ void process_command(Command cmd) {
     }
 
     if (strcmp(cmd->argv[0], "cd") == 0) {
-        // TODO: change directory
+        change_directory(cmd->argv, cmd->argc);
     }
 
     if (strcmp(cmd->argv[0], "status") == 0) {
