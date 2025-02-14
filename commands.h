@@ -17,7 +17,7 @@ struct command_entry;
 typedef struct command_entry *Command;
 
 Command parse_command(void);
-int print_command(Command);
-void process_command(Command);
+int print_command(Command cmd);
+void process_command(Command cmd);
 
 #endif
