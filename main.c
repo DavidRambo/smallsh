@@ -17,6 +17,8 @@ int main(void) {
             exit(EXIT_FAILURE);
         }
 #endif
+
+        free(curr_cmd); // Free memory before parsing another command.
     }
 
     return EXIT_SUCCESS;
