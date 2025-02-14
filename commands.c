@@ -46,6 +46,9 @@ Command parse_command(void) {
     char input[INPUT_LENGTH];
     Command cmd = (Command)calloc(1, sizeof(struct command_entry));
 
+    // To ensure that i/o redirection occurs after command and arguments.
+    int args_done = 0;
+
     // Print prompt.
     printf(PROMPT);
     fflush(stdout);
@@ -58,15 +61,22 @@ Command parse_command(void) {
         if (strcmp(token, "<") == 0) {
             // Redirect stdin.
             cmd->in_file = strdup(strtok_r(NULL, " \n", &cmd_tok_ptr));
+            args_done = 1;
         } else if (strcmp(token, ">") == 0) {
             // Redirect stdout.
             cmd->out_file = strdup(strtok_r(NULL, " \n", &cmd_tok_ptr));
+            args_done = 1;
         } else if (strcmp(token, "&") == 0) {
             // Run as background job.
             cmd->is_bg = true;
-        } else {
+        } else if (!args_done) {
             // Add to list of arguments.
             cmd->argv[cmd->argc++] = strdup(token);
+        } else {
+            // More command arguments were received after redirection.
+            printf("Error: command arguments must precede input/output "
+                   "redirection.\n");
+            return NULL;
         }
 
         token = strtok_r(NULL, " \n", &cmd_tok_ptr);
