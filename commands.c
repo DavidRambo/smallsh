@@ -91,6 +91,7 @@ Command parse_command(void) {
             // More command arguments were received after redirection.
             printf("Error: command arguments must precede input/output "
                    "redirection.\n");
+            fflush(stdout);
             return NULL;
         }
 

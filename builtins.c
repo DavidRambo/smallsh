@@ -24,6 +24,7 @@ void change_directory(char *argv[], int argc) {
     // Check for correct number of arguments.
     if (argc > 2) {
         printf("smallsh: cd: too many arguments\n");
+        fflush(stdout);
         return;
     }
 
@@ -33,6 +34,7 @@ void change_directory(char *argv[], int argc) {
         char *home_path = getenv("HOME");
         if (home_path == NULL) {
             printf("No directory path set for user's $HOME.\n");
+            fflush(stdout);
             return;
         }
         // Set global g_curr_dir variable to user's $HOME
@@ -62,12 +64,15 @@ void print_status(void) {
     switch (status.kind) {
         case EXIT_CODE:
             printf("exit value %d\n", status.code);
+            fflush(stdout);
             break;
         case SIGNAL:
             printf("terminated by signal %d\n", status.code);
+            fflush(stdout);
             break;
         default:
             printf("Error: invalid status code.\n");
+            fflush(stdout);
             break;
     }
 }
