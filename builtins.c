@@ -3,6 +3,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+// Tracks the status of the last process to terminate.
+struct status {
+    enum { EXIT_CODE = 0, SIGNAL = 1 } kind;
+    int code;
+};
+
+// External variable to track status while smallsh is running.
+Status status = {0, 0};
+
 /*
  * Changes the current working directory of smallsh using the
  *
@@ -47,4 +56,23 @@ void change_directory(char *argv[], int argc) {
     printf(">>> change_directory() -> pwd is %s\n", curr_dir);
     free(curr_dir);
 #endif
+}
+
+void print_status(void) {
+    switch (status.kind) {
+        case EXIT_CODE:
+            printf("exit value %d\n", status.code);
+            break;
+        case SIGNAL:
+            printf("terminated by signal %d\n", status.code);
+            break;
+        default:
+            printf("Error: invalid status code.\n");
+            break;
+    }
+}
+
+void set_status(int kind, int new_status) {
+    status.kind = kind;
+    status.code = new_status;
 }

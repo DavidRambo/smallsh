@@ -157,7 +157,8 @@ void process_command(Command cmd) {
     }
 
     if (strcmp(cmd->argv[0], "status") == 0) {
-        // TODO: Display status of last foreground process via stdout.
+        // Display status of last foreground process via stdout.
+        print_status();
     }
 
     // TODO: Not a built-in, so send to general execution function.
