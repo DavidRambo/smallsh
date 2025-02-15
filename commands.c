@@ -100,6 +100,7 @@ Command parse_command(void) {
     return cmd;
 }
 
+#if DEBUG
 /*
  * For debugging purposes, this function prints out the parsed command.
  */
@@ -128,6 +129,7 @@ int print_command(Command cmd) {
 
     return EXIT_SUCCESS;
 }
+#endif
 
 /*
  * Dispatcher function for running a parsed command.
