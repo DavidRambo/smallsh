@@ -10,5 +10,6 @@ typedef struct status Status;
 void change_directory(char *argv[], int argc);
 void print_status(void);
 void set_status(int kind, int new_status);
+void update_status(int wstatus);
 
 #endif

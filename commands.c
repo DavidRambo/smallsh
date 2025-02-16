@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 /*
  * Represents a parsed smallsh command entered at the prompt.
@@ -147,22 +149,56 @@ int print_command(Command cmd) {
  *  execution function.
  */
 void process_command(Command cmd) {
-
     // Check for built-in commands.
     if (strcmp(cmd->argv[0], "exit") == 0) {
         // TODO: Kill running processes and jobs.
         // kill_all();
         exit(EXIT_SUCCESS);
-    }
-
-    if (strcmp(cmd->argv[0], "cd") == 0) {
+    } else if (strcmp(cmd->argv[0], "cd") == 0) {
         change_directory(cmd->argv, cmd->argc);
-    }
-
-    if (strcmp(cmd->argv[0], "status") == 0) {
+    } else if (strcmp(cmd->argv[0], "status") == 0) {
         // Display status of last foreground process via stdout.
         print_status();
-    }
+    } else {
+        // Not a built-in, so fork a child process to run the command.
+        // This switch statement idea is from Dr. Guillermo Tonsmann's
+        // "Processes" pdf, p.30.
+        pid_t spawn_pid, child_pid;
+        int result;
+        switch (spawn_pid = fork()) {
+            case -1:
+                perror("fork() failed");
+                exit(EXIT_FAILURE);
 
-    // TODO: Not a built-in, so send to general execution function.
+            case 0: // Child process.
+                // Append a NULL to the array of args for the execvp call.
+                cmd->argv[cmd->argc] = NULL;
+
+                // The child process executes the command.
+                execvp(cmd->argv[0], cmd->argv);
+
+                perror("execvp()");
+                exit(EXIT_FAILURE);
+
+                break;
+
+            default:
+#if DEBUG
+                printf("In parent process about to wait on child process %d\n",
+                       spawn_pid);
+                fflush(stdout);
+#endif
+                // The parent process waits for the child process to terminate.
+                child_pid = waitpid(spawn_pid, &result, 0);
+#if DEBUG
+                printf("Parent done waiting. waitpid returned %d\n", child_pid);
+                fflush(stdout);
+#endif
+
+                // Update smallsh's Status.
+                update_status(result);
+
+                break;
+        }
+    }
 }

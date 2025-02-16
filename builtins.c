@@ -60,6 +60,9 @@ void change_directory(char *argv[], int argc) {
 #endif
 }
 
+/**
+ * Prints to stdout the status of the last process to terminate.
+ */
 void print_status(void) {
     switch (status.kind) {
         case EXIT_CODE:
@@ -77,7 +80,29 @@ void print_status(void) {
     }
 }
 
+/**
+ * Sets the external Status struct.
+ *
+ * Parameters:
+ * kind (int) either EXIT_CODE or SIGNAL
+ * new_status (int) either the exit code or the signal number
+ */
 void set_status(int kind, int new_status) {
     status.kind = kind;
     status.code = new_status;
+}
+
+/**
+ * Interprets the wstatus set by waitpid() on a child process in order to
+ * update the smallsh Status struct.
+ *
+ * Parameters:
+ * wstatus (int) wstatus integer set by waitpid()
+ */
+void update_status(int wstatus) {
+    if (WIFEXITED(wstatus)) {
+        set_status(EXIT_CODE, WEXITSTATUS(wstatus));
+    } else if (WIFSIGNALED(wstatus)) {
+        set_status(SIGNAL, WTERMSIG(wstatus));
+    }
 }
