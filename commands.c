@@ -53,6 +53,7 @@ Command parse_command(void) {
     // To ensure that i/o redirection occurs after command and arguments.
     int args_done = 0;
 
+    // TODO: Print message re terminating background process before prompt.
     // Print prompt.
     printf(PROMPT);
     fflush(stdout);
@@ -188,6 +189,18 @@ void process_command(Command cmd) {
         if (result) {
             _exit(EXIT_FAILURE);
         }
+
+        // TODO: Save process information: pid, i/o file descriptors, ...
+
+        // TODO: Print the PID of the background process when it begins.
+
+        // TODO: When the background process terminates, print message with its
+        // PID and exit status just before displaying a new prompt.
+
+        // TODO: Either set a signal handler to wait for it to terminate or
+        // periodically check a list of background processes using
+        // waitpid(...WNOHANG...).
+
     } else {
         // Not a built-in, so fork a child process to run the command.
         // This switch statement idea is from Dr. Guillermo Tonsmann's
@@ -264,8 +277,6 @@ void process_command(Command cmd) {
  */
 int redirect_in(char *infile, int *in_fd) {
     int newfd;
-    // TODO: When doing redirection for background processes, save file
-    // descriptors so that they may be closed upon termination.
 
     // Open file to read from for stdin redirection.
     newfd = open(infile, O_RDONLY);
@@ -296,8 +307,6 @@ int redirect_in(char *infile, int *in_fd) {
  */
 int redirect_out(char *outfile, int *out_fd) {
     int newfd;
-    // TODO: When doing redirection for background processes, save file
-    // descriptors so that they may be closed upon termination.
 
     // Open file to read from for stdin redirection.
     newfd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY, 0640);
@@ -313,7 +322,7 @@ int redirect_out(char *outfile, int *out_fd) {
         return 1;
     }
 
-    // Save file descriptor to provided integer.
+    // Save file descriptor to provided integer variable.
     *out_fd = newfd;
 
     return 0;
