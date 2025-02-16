@@ -150,6 +150,13 @@ int print_command(Command cmd) {
  *  execution function.
  */
 void process_command(Command cmd) {
+    pid_t spawn_pid, child_pid;
+    int result;
+    // In case of i/o redirection, save the file descriptors so that they
+    // may be closed once the child process terminates.
+    int in_fd = -1;
+    int out_fd = -1;
+
     // Check for built-in commands.
     if (strcmp(cmd->argv[0], "exit") == 0) {
         // TODO: Kill running processes and jobs and close any open files.
@@ -164,11 +171,6 @@ void process_command(Command cmd) {
         // Not a built-in, so fork a child process to run the command.
         // This switch statement idea is from Dr. Guillermo Tonsmann's
         // "Processes" pdf, p.30.
-        pid_t spawn_pid, child_pid;
-        int result;
-        int in_fd = -1;
-        int out_fd = -1;
-
         switch (spawn_pid = fork()) {
             case -1:
                 perror("fork() failed");
