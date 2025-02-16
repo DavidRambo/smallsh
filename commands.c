@@ -1,5 +1,6 @@
 #include "commands.h"
 #include "builtins.h"
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,7 +152,7 @@ int print_command(Command cmd) {
 void process_command(Command cmd) {
     // Check for built-in commands.
     if (strcmp(cmd->argv[0], "exit") == 0) {
-        // TODO: Kill running processes and jobs.
+        // TODO: Kill running processes and jobs and close any open files.
         // kill_all();
         exit(EXIT_SUCCESS);
     } else if (strcmp(cmd->argv[0], "cd") == 0) {
@@ -165,6 +166,9 @@ void process_command(Command cmd) {
         // "Processes" pdf, p.30.
         pid_t spawn_pid, child_pid;
         int result;
+        int in_fd = -1;
+        int out_fd = -1;
+
         switch (spawn_pid = fork()) {
             case -1:
                 perror("fork() failed");
@@ -175,10 +179,27 @@ void process_command(Command cmd) {
                 cmd->argv[cmd->argc] = NULL;
 
                 // The child process executes the command.
+                if (cmd->in_file != NULL) {
+                    result = redirect_in(cmd->in_file, &in_fd);
+                    if (result) {
+                        _exit(EXIT_FAILURE);
+                        // parent process takes care of updating status
+                    }
+                }
+
+                if (cmd->out_file != NULL) {
+                    result = redirect_out(cmd->out_file, &out_fd);
+                    if (result) {
+                        _exit(EXIT_FAILURE);
+                        // parent process takes care of updating status
+                    }
+                }
+
                 execvp(cmd->argv[0], cmd->argv);
 
                 perror("execvp()");
                 _exit(EXIT_FAILURE);
+                // parent process takes care of updating status
 
                 break;
 
@@ -195,10 +216,82 @@ void process_command(Command cmd) {
                 fflush(stdout);
 #endif
 
+                // Close any files opened for redirection.
+                if (in_fd != -1) {
+                    close(in_fd);
+                }
+                if (out_fd != -1) {
+                    close(out_fd);
+                }
+
                 // Update smallsh's Status.
                 update_status(result);
 
                 break;
         }
     }
+}
+
+/**
+ * Redirects stdin file descriptor to the specified pathname.
+ *
+ * This function prints any errors encountered.
+ *
+ * Returns 0 if successful, 1 if not.
+ */
+int redirect_in(char *infile, int *in_fd) {
+    int newfd;
+    // TODO: When doing redirection for background processes, save file
+    // descriptors so that they may be closed upon termination.
+
+    // Open file to read from for stdin redirection.
+    newfd = open(infile, O_RDONLY);
+    if (newfd == -1) {
+        printf("cannot open %s for input\n", infile);
+        return 1;
+    }
+
+    // Redirect stdin to infile's fd.
+    newfd = dup2(newfd, STDIN_FILENO);
+    if (newfd == -1) {
+        perror("dup2");
+        return 1;
+    }
+
+    // Save file descriptor to provided integer.
+    *in_fd = newfd;
+
+    return 0;
+}
+
+/**
+ * Redirects stdout file descriptor to the specified pathname.
+ *
+ * This function prints any errors encountered.
+ *
+ * Returns 0 if successful, 1 if not.
+ */
+int redirect_out(char *outfile, int *out_fd) {
+    int newfd;
+    // TODO: When doing redirection for background processes, save file
+    // descriptors so that they may be closed upon termination.
+
+    // Open file to read from for stdin redirection.
+    newfd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY, 0640);
+    if (newfd == -1) {
+        printf("cannot open %s for output\n", outfile);
+        return 1;
+    }
+
+    // Redirect stdin to infile's fd.
+    newfd = dup2(newfd, STDOUT_FILENO);
+    if (newfd == -1) {
+        perror("dup2");
+        return 1;
+    }
+
+    // Save file descriptor to provided integer.
+    *out_fd = newfd;
+
+    return 0;
 }

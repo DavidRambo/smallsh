@@ -19,5 +19,7 @@ typedef struct command_entry *Command;
 Command parse_command(void);
 int print_command(Command cmd);
 void process_command(Command cmd);
+int redirect_in(char *infile, int *in_fd);
+int redirect_out(char *outfile, int *out_fd);
 
 #endif
