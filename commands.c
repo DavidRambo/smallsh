@@ -178,7 +178,7 @@ void process_command(Command cmd) {
                 execvp(cmd->argv[0], cmd->argv);
 
                 perror("execvp()");
-                exit(EXIT_FAILURE);
+                _exit(EXIT_FAILURE);
 
                 break;
 
