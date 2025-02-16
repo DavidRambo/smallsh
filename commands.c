@@ -167,6 +167,27 @@ void process_command(Command cmd) {
     } else if (strcmp(cmd->argv[0], "status") == 0) {
         // Display status of last foreground process via stdout.
         print_status();
+    } else if (cmd->is_bg) {
+        // Process is set to run in the background.
+
+        // Must redirect i/o.
+        if (cmd->in_file == NULL) {
+            result = redirect_in("/dev/null", &in_fd);
+        } else {
+            result = redirect_in(cmd->in_file, &in_fd);
+        }
+        if (result) {
+            _exit(EXIT_FAILURE);
+        }
+
+        if (cmd->out_file == NULL) {
+            result = redirect_out("/dev/null", &out_fd);
+        } else {
+            result = redirect_out(cmd->out_file, &out_fd);
+        }
+        if (result) {
+            _exit(EXIT_FAILURE);
+        }
     } else {
         // Not a built-in, so fork a child process to run the command.
         // This switch statement idea is from Dr. Guillermo Tonsmann's
