@@ -1,6 +1,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
+#include "processes.h"
 #include <stdbool.h>
 
 // Suggested directives from sample_parser.c
@@ -16,10 +17,12 @@ struct command_entry;
 // Client code interfaces with the command_entry struct through its pointer.
 typedef struct command_entry *Command;
 
+Process background_command(Command cmd, Process procs);
 Command parse_command(void);
 int print_command(Command cmd);
-void process_command(Command cmd);
-int redirect_in(char *infile, int *in_fd);
-int redirect_out(char *outfile, int *out_fd);
+Process process_command(Command cmd, Process procs);
+int redirect_in(char *infile);
+int redirect_out(char *outfile);
+void execute_command(Command cmd);
 
 #endif

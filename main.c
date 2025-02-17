@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "processes.h"
 #include <stdlib.h>
 
 /*
@@ -6,6 +7,7 @@
  */
 int main(void) {
     Command curr_cmd;
+    Process procs;
 
     while (true) {
         curr_cmd = parse_command();
@@ -23,7 +25,7 @@ int main(void) {
         }
 #endif
 
-        process_command(curr_cmd);
+        procs = process_command(curr_cmd, procs);
 
         free(curr_cmd); // Free memory before parsing another command.
     }

@@ -1,5 +1,6 @@
 #include "commands.h"
 #include "builtins.h"
+#include "processes.h"
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -150,18 +151,12 @@ int print_command(Command cmd) {
  *  If the command is not a built-in, then it sends the command to a generic
  *  execution function.
  */
-void process_command(Command cmd) {
-    pid_t spawn_pid, child_pid;
-    int result;
-    // In case of i/o redirection, save the file descriptors so that they
-    // may be closed once the child process terminates.
-    int in_fd = -1;
-    int out_fd = -1;
-
+Process process_command(Command cmd, Process procs) {
     // Check for built-in commands.
     if (strcmp(cmd->argv[0], "exit") == 0) {
-        // TODO: Kill running processes and jobs and close any open files.
-        // kill_all();
+        // Terminate all running processes and jobs.
+        kill_all(procs);
+
         exit(EXIT_SUCCESS);
     } else if (strcmp(cmd->argv[0], "cd") == 0) {
         change_directory(cmd->argv, cmd->argc);
@@ -170,102 +165,126 @@ void process_command(Command cmd) {
         print_status();
     } else if (cmd->is_bg) {
         // Process is set to run in the background.
-
-        // Must redirect i/o.
-        if (cmd->in_file == NULL) {
-            result = redirect_in("/dev/null", &in_fd);
-        } else {
-            result = redirect_in(cmd->in_file, &in_fd);
-        }
-        if (result) {
-            _exit(EXIT_FAILURE);
-        }
-
-        if (cmd->out_file == NULL) {
-            result = redirect_out("/dev/null", &out_fd);
-        } else {
-            result = redirect_out(cmd->out_file, &out_fd);
-        }
-        if (result) {
-            _exit(EXIT_FAILURE);
-        }
-
-        // TODO: Save process information: pid, i/o file descriptors, ...
-
-        // TODO: Print the PID of the background process when it begins.
-
-        // TODO: When the background process terminates, print message with its
-        // PID and exit status just before displaying a new prompt.
-
-        // TODO: Either set a signal handler to wait for it to terminate or
-        // periodically check a list of background processes using
-        // waitpid(...WNOHANG...).
-
+        procs = background_command(cmd, procs);
     } else {
         // Not a built-in, so fork a child process to run the command.
-        // This switch statement idea is from Dr. Guillermo Tonsmann's
-        // "Processes" pdf, p.30.
-        switch (spawn_pid = fork()) {
-            case -1:
-                perror("fork() failed");
-                exit(EXIT_FAILURE);
-
-            case 0: // Child process.
-                // Append a NULL to the array of args for the execvp call.
-                cmd->argv[cmd->argc] = NULL;
-
-                // The child process executes the command.
-                if (cmd->in_file != NULL) {
-                    result = redirect_in(cmd->in_file, &in_fd);
-                    if (result) {
-                        _exit(EXIT_FAILURE);
-                        // parent process takes care of updating status
-                    }
-                }
-
-                if (cmd->out_file != NULL) {
-                    result = redirect_out(cmd->out_file, &out_fd);
-                    if (result) {
-                        _exit(EXIT_FAILURE);
-                        // parent process takes care of updating status
-                    }
-                }
-
-                execvp(cmd->argv[0], cmd->argv);
-
-                perror("execvp()");
-                _exit(EXIT_FAILURE);
-                // parent process takes care of updating status
-
-                break;
-
-            default:
-#if DEBUG
-                printf("In parent process about to wait on child process %d\n",
-                       spawn_pid);
-                fflush(stdout);
-#endif
-                // The parent process waits for the child process to terminate.
-                child_pid = waitpid(spawn_pid, &result, 0);
-#if DEBUG
-                printf("Parent done waiting. waitpid returned %d\n", child_pid);
-                fflush(stdout);
-#endif
-
-                // Close any files opened for redirection.
-                if (in_fd != -1) {
-                    close(in_fd);
-                }
-                if (out_fd != -1) {
-                    close(out_fd);
-                }
-
-                // Update smallsh's Status.
-                update_status(result);
-
-                break;
-        }
+        execute_command(cmd);
     }
+    return procs;
+}
+
+void execute_command(Command cmd) {
+    pid_t spawn_pid, child_pid;
+    int result;
+    // This switch statement idea is from Dr. Guillermo Tonsmann's
+    // "Processes" pdf, p.30.
+    switch (spawn_pid = fork()) {
+        case -1:
+            perror("fork() failed");
+            exit(EXIT_FAILURE);
+
+        case 0: // Child process.
+            if (cmd->in_file != NULL) {
+                result = redirect_in(cmd->in_file);
+                if (result) {
+                    _exit(EXIT_FAILURE);
+                    // parent process takes care of updating status
+                }
+            }
+
+            if (cmd->out_file != NULL) {
+                result = redirect_out(cmd->out_file);
+                if (result) {
+                    _exit(EXIT_FAILURE);
+                    // parent process takes care of updating status
+                }
+            }
+
+            // Append a NULL to the array of args for the execvp call.
+            cmd->argv[cmd->argc] = NULL;
+
+            // The child process executes the command.
+            execvp(cmd->argv[0], cmd->argv);
+
+            perror("execvp()");
+            _exit(EXIT_FAILURE);
+            // parent process takes care of updating status
+
+            break;
+
+        default:
+#if DEBUG
+            printf("In parent process about to wait on child process %d\n",
+                   spawn_pid);
+            fflush(stdout);
+#endif
+            // The parent process waits for the child process to terminate.
+            child_pid = waitpid(spawn_pid, &result, 0);
+#if DEBUG
+            printf("Parent done waiting. waitpid returned %d\n", child_pid);
+            fflush(stdout);
+#endif
+
+            // Update smallsh's Status.
+            update_status(result);
+
+            break;
+    }
+}
+
+Process background_command(Command cmd, Process procs) {
+    pid_t spawn_pid;
+    int result;
+
+    switch (spawn_pid = fork()) {
+        case -1:
+            perror("fork() failed");
+            exit(EXIT_FAILURE);
+
+        case 0: // Child process.
+            // Must redirect i/o.
+            if (cmd->in_file == NULL) {
+                result = redirect_in("/dev/null");
+            } else {
+                result = redirect_in(cmd->in_file);
+            }
+            if (result) {
+                _exit(EXIT_FAILURE);
+            }
+
+            if (cmd->out_file == NULL) {
+                result = redirect_out("/dev/null");
+            } else {
+                result = redirect_out(cmd->out_file);
+            }
+            if (result) {
+                _exit(EXIT_FAILURE);
+            }
+            // TODO: Either set a signal handler to wait for it to terminate or
+            // periodically check a list of background processes using
+            // waitpid(...WNOHANG...).
+
+            // TODO: When the background process terminates, print message with
+            // its PID and exit status just before displaying a new prompt.
+            // TODO: Update smallsh status. This can probably be put into the
+            // signal handler.
+
+            break;
+
+        default: // Parent process.
+            // Save process in list so that it may be terminated upon smallsh
+            // exit.
+            procs = add_proc(procs, spawn_pid);
+
+            // Print the PID of the background process when it begins.
+            printf("background pid is %d", spawn_pid);
+            fflush(stdout);
+
+            // Return to the prompt.
+            break;
+    }
+
+    return procs;
 }
 
 /**
@@ -275,7 +294,7 @@ void process_command(Command cmd) {
  *
  * Returns 0 if successful, 1 if not.
  */
-int redirect_in(char *infile, int *in_fd) {
+int redirect_in(char *infile) {
     int newfd;
 
     // Open file to read from for stdin redirection.
@@ -292,9 +311,6 @@ int redirect_in(char *infile, int *in_fd) {
         return 1;
     }
 
-    // Save file descriptor to provided integer.
-    *in_fd = newfd;
-
     return 0;
 }
 
@@ -305,7 +321,7 @@ int redirect_in(char *infile, int *in_fd) {
  *
  * Returns 0 if successful, 1 if not.
  */
-int redirect_out(char *outfile, int *out_fd) {
+int redirect_out(char *outfile) {
     int newfd;
 
     // Open file to read from for stdin redirection.
@@ -321,9 +337,6 @@ int redirect_out(char *outfile, int *out_fd) {
         perror("dup2");
         return 1;
     }
-
-    // Save file descriptor to provided integer variable.
-    *out_fd = newfd;
 
     return 0;
 }
