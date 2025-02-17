@@ -7,7 +7,7 @@
  */
 int main(void) {
     Command curr_cmd;
-    Process procs;
+    Process procs = NULL;
 
     while (true) {
         curr_cmd = parse_command();
