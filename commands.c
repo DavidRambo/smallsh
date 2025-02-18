@@ -2,6 +2,7 @@
 #include "builtins.h"
 #include "processes.h"
 #include <fcntl.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,10 @@ struct command_entry {
     char *out_file;
     bool is_bg;
 };
+
+void handle_fg_SIGINT(int signo) {
+    _exit(EXIT_SUCCESS);
+}
 
 /*
  * Parses a smallsh command entered at the prompt.
@@ -175,6 +180,7 @@ Process process_command(Command cmd, Process procs) {
 void execute_command(Command cmd) {
     pid_t spawn_pid, child_pid;
     int result;
+
     // This switch statement idea is from Dr. Guillermo Tonsmann's
     // "Processes" pdf, p.30.
     switch (spawn_pid = fork()) {
@@ -201,6 +207,18 @@ void execute_command(Command cmd) {
 
             // Append a NULL to the array of args for the execvp call.
             cmd->argv[cmd->argc] = NULL;
+
+            struct sigaction SIGINT_action = {0};
+
+            // These lines are adapted from "Exploration: Signal Handling API".
+            // Register handler for SIGINT.
+            SIGINT_action.sa_handler = handle_fg_SIGINT;
+            // Block catchable signals while SIGINT is running.
+            sigfillset(&SIGINT_action.sa_mask);
+            // No flags.
+            SIGINT_action.sa_flags = 0;
+            // Install the handler.
+            sigaction(SIGINT, &SIGINT_action, NULL);
 
             // The child process executes the command.
             execvp(cmd->argv[0], cmd->argv);
