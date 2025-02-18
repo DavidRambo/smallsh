@@ -1,5 +1,6 @@
 #include "commands.h"
 #include "processes.h"
+#include <signal.h>
 #include <stdlib.h>
 
 /*
@@ -8,6 +9,12 @@
 int main(void) {
     Command curr_cmd;
     Process procs = NULL;
+    struct sigaction SIGINT_action = {0};
+
+    // Register handler to ignore SIGINT.
+    SIGINT_action.sa_handler = SIG_IGN;
+    // Install the handler.
+    sigaction(SIGINT, &SIGINT_action, NULL);
 
     while (true) {
         procs = check_bg_processes(procs);
