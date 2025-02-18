@@ -245,6 +245,10 @@ void execute_command(Command cmd) {
             // Update smallsh's Status.
             update_status(result);
 
+            if (WIFSIGNALED(result)) {
+                print_status();
+            }
+
             break;
     }
 }
