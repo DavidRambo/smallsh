@@ -210,7 +210,10 @@ void execute_command(Command cmd) {
 
             struct sigaction SIGINT_action = {0};
 
-            // These lines are adapted from "Exploration: Signal Handling API".
+            /* These lines are adapted from "Exploration: Signal Handling API".
+             * https://canvas.oregonstate.edu/courses/1987883/pages/exploration-signal-handling-api?module_item_id=24956227
+             * 2025-02-18
+             */
             // Register handler for SIGINT.
             SIGINT_action.sa_handler = handle_fg_SIGINT;
             // Block catchable signals while SIGINT is running.
