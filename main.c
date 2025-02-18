@@ -10,6 +10,8 @@ int main(void) {
     Process procs = NULL;
 
     while (true) {
+        procs = check_bg_processes(procs);
+
         curr_cmd = parse_command();
 
         // parse_command() returns NULL when i/o redirection is followed by

@@ -9,6 +9,7 @@ struct process;
 typedef struct process *Process;
 
 Process add_proc(Process head, pid_t pid);
+Process check_bg_processes(Process head);
 Process find_proc(Process head, pid_t pid);
 void kill_all(Process head);
 Process rm_proc(Process head, pid_t pid);

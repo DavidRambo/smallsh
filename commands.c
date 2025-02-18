@@ -54,7 +54,6 @@ Command parse_command(void) {
     // To ensure that i/o redirection occurs after command and arguments.
     int args_done = 0;
 
-    // TODO: Print message re terminating background process before prompt.
     // Print prompt.
     printf(PROMPT);
     fflush(stdout);
@@ -260,14 +259,16 @@ Process background_command(Command cmd, Process procs) {
             if (result) {
                 _exit(EXIT_FAILURE);
             }
-            // TODO: Either set a signal handler to wait for it to terminate or
-            // periodically check a list of background processes using
-            // waitpid(...WNOHANG...).
 
-            // TODO: When the background process terminates, print message with
-            // its PID and exit status just before displaying a new prompt.
-            // TODO: Update smallsh status. This can probably be put into the
-            // signal handler.
+            // Append a NULL to the array of args for the execvp call.
+            cmd->argv[cmd->argc] = NULL;
+
+            // The child process executes the command.
+            execvp(cmd->argv[0], cmd->argv);
+
+            perror("execvp()");
+            _exit(EXIT_FAILURE);
+            // parent process takes care of updating status
 
             break;
 
@@ -277,7 +278,7 @@ Process background_command(Command cmd, Process procs) {
             procs = add_proc(procs, spawn_pid);
 
             // Print the PID of the background process when it begins.
-            printf("background pid is %d", spawn_pid);
+            printf("background pid is %d\n", spawn_pid);
             fflush(stdout);
 
             // Return to the prompt.

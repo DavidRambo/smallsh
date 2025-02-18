@@ -4,9 +4,11 @@
  */
 
 #include "processes.h"
+#include "builtins.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 void term_proc(pid_t pid);
@@ -29,6 +31,31 @@ Process add_proc(Process head, pid_t pid) {
     new_proc->next = head;
 
     return new_proc;
+}
+
+/**
+ * Checks for any terminated background process. If one is found, then prints
+ * its pid and status to the console and removes it from the Process list.
+ */
+Process check_bg_processes(Process head) {
+    int wstatus;
+    pid_t child_pid;
+
+    child_pid = waitpid(-1, &wstatus, WNOHANG);
+
+    // Print message re terminating background process before prompt.
+    if (child_pid > 0) {
+        // Update smallsh status with bg process.
+        update_status(wstatus);
+
+        printf("background pid %d is done: ", child_pid);
+        print_status();
+
+        // Remove process's pid from the Process list.
+        head = rm_proc(head, child_pid);
+    }
+
+    return head;
 }
 
 /**
