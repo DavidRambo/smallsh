@@ -285,6 +285,25 @@ Process background_command(Command cmd, Process procs) {
                 _exit(EXIT_FAILURE);
             }
 
+            // Set background process to ignore SIGINT and SIGTSTP signals.
+            struct sigaction SIGINT_action = {0};
+            struct sigaction SIGTSTP_action = {0};
+
+            // Register handler to ignore SIGINT.
+            SIGINT_action.sa_handler = SIG_IGN;
+            // Install the handler.
+            sigaction(SIGINT, &SIGINT_action, NULL);
+
+            // Register handler to ignore SIGTSTP.
+            SIGTSTP_action.sa_handler = SIG_IGN;
+            // Install the handler.
+            sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+
+#if DEBUG
+            // Try to self-interrupt.
+            raise(SIGINT);
+#endif
+
             // Append a NULL to the array of args for the execvp call.
             cmd->argv[cmd->argc] = NULL;
 
