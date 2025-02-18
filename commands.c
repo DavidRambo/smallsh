@@ -209,6 +209,7 @@ void execute_command(Command cmd) {
             cmd->argv[cmd->argc] = NULL;
 
             struct sigaction SIGINT_action = {0};
+            struct sigaction SIGTSTP_action = {0};
 
             /* These lines are adapted from "Exploration: Signal Handling API".
              * https://canvas.oregonstate.edu/courses/1987883/pages/exploration-signal-handling-api?module_item_id=24956227
@@ -222,6 +223,11 @@ void execute_command(Command cmd) {
             SIGINT_action.sa_flags = 0;
             // Install the handler.
             sigaction(SIGINT, &SIGINT_action, NULL);
+
+            // Register handler to ignore SIGTSTP.
+            SIGTSTP_action.sa_handler = SIG_IGN;
+            // Install the handler.
+            sigaction(SIGTSTP, &SIGTSTP_action, NULL);
 
             // The child process executes the command.
             execvp(cmd->argv[0], cmd->argv);
