@@ -52,12 +52,6 @@ void change_directory(char *argv[], int argc) {
             perror("chdir()");
         }
     }
-
-#if DEBUG
-    char *curr_dir = getcwd(NULL, 512);
-    printf(">>> change_directory() -> pwd is %s\n", curr_dir);
-    free(curr_dir);
-#endif
 }
 
 /**

@@ -41,13 +41,6 @@ int main(void) {
             continue;
         }
 
-#if DEBUG
-        int res = print_command(curr_cmd);
-        if (res != 0) {
-            exit(EXIT_FAILURE);
-        }
-#endif
-
         procs = process_command(curr_cmd, procs);
 
         free(curr_cmd); // Free memory before parsing another command.

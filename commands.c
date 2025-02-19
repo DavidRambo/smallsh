@@ -115,37 +115,6 @@ Command parse_command(int fg_only) {
     return cmd;
 }
 
-#if DEBUG
-/*
- * For debugging purposes, this function prints out the parsed command.
- */
-int print_command(Command cmd) {
-    if (cmd == NULL) {
-        printf("Error, the command is NULL.\n");
-        return EXIT_FAILURE;
-    }
-
-    if (cmd->argc == 0) {
-        printf("No commands entered.\n");
-        return EXIT_SUCCESS;
-    } else {
-        printf("Command = %s\n", cmd->argv[0]);
-        for (int c = 1; c < cmd->argc; c++) {
-            printf("Arg %d : %s\n", c, cmd->argv[c]);
-        }
-    }
-
-    if (cmd->in_file != NULL) {
-        printf("Redirect input from : %s\n", cmd->in_file);
-    }
-    if (cmd->out_file != NULL) {
-        printf("Redirect output to : %s\n", cmd->out_file);
-    }
-
-    return EXIT_SUCCESS;
-}
-#endif
-
 /*
  * Dispatcher function for running a parsed command.
  *
@@ -246,17 +215,8 @@ void execute_command(Command cmd) {
             break;
 
         default:
-#if DEBUG
-            printf("In parent process about to wait on child process %d\n",
-                   spawn_pid);
-            fflush(stdout);
-#endif
             // The parent process waits for the child process to terminate.
             child_pid = waitpid(spawn_pid, &result, 0);
-#if DEBUG
-            printf("Parent done waiting. waitpid returned %d\n", child_pid);
-            fflush(stdout);
-#endif
 
             // Update smallsh's Status.
             update_status(result);
@@ -312,11 +272,6 @@ Process background_command(Command cmd, Process procs) {
             SIGTSTP_action.sa_handler = SIG_IGN;
             // Install the handler.
             sigaction(SIGTSTP, &SIGTSTP_action, NULL);
-
-#if DEBUG
-            // Try to self-interrupt.
-            raise(SIGINT);
-#endif
 
             // Append a NULL to the array of args for the execvp call.
             cmd->argv[cmd->argc] = NULL;
