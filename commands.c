@@ -24,6 +24,7 @@
  *
  * Entered commands may be accessed in order via
  * command_entry.argv[command_entry.argc].
+ * Or, via struct command_entry* pointer: cmd->argv[cmg->argc].
  *
  */
 struct command_entry {
@@ -52,8 +53,8 @@ void handle_fg_SIGINT(int signo) {
  * Input is retrieved from stdin, set to a maximum of INPUT_LENGTH characters.
  * It is tokenized at spaces and a terminating newline.
  */
-Command parse_command(void) {
-    char input[INPUT_LENGTH];
+Command parse_command(int fg_only) {
+    char input[INPUT_LENGTH] = {0};
     Command cmd = (Command)calloc(1, sizeof(struct command_entry));
 
     // To ensure that i/o redirection occurs after command and arguments.
@@ -62,6 +63,8 @@ Command parse_command(void) {
     // Print prompt.
     printf(PROMPT);
     fflush(stdout);
+
+    // Get input from user.
     fgets(input, INPUT_LENGTH, stdin);
 
     // Tokenize input into commands.
@@ -88,8 +91,10 @@ Command parse_command(void) {
             cmd->out_file = strdup(strtok_r(NULL, " \n", &cmd_tok_ptr));
             args_done = 1;
         } else if (strcmp(token, "&") == 0) {
-            // Run as background job.
-            cmd->is_bg = true;
+            if (!fg_only) {
+                // Run as background job unless foreground-only mode is on.
+                cmd->is_bg = true;
+            }
         } else if (!args_done) {
             // Add to list of arguments.
             cmd->argv[cmd->argc++] = strdup(token);
@@ -216,6 +221,7 @@ void execute_command(Command cmd) {
              * 2025-02-18
              */
             // Register handler for SIGINT.
+            // This will not apply to exec() commands.
             SIGINT_action.sa_handler = handle_fg_SIGINT;
             // Block catchable signals while SIGINT is running.
             sigfillset(&SIGINT_action.sa_mask);
@@ -225,6 +231,7 @@ void execute_command(Command cmd) {
             sigaction(SIGINT, &SIGINT_action, NULL);
 
             // Register handler to ignore SIGTSTP.
+            // This will apply to exec() commands.
             SIGTSTP_action.sa_handler = SIG_IGN;
             // Install the handler.
             sigaction(SIGTSTP, &SIGTSTP_action, NULL);
@@ -292,6 +299,7 @@ Process background_command(Command cmd, Process procs) {
             }
 
             // Set background process to ignore SIGINT and SIGTSTP signals.
+            // Ignored signals apply to commands called with exec().
             struct sigaction SIGINT_action = {0};
             struct sigaction SIGTSTP_action = {0};
 
