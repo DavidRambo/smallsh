@@ -18,6 +18,7 @@ struct command_entry;
 typedef struct command_entry *Command;
 
 Process background_command(Command cmd, Process procs);
+void free_command(Command cmd);
 Command parse_command(int fg_only);
 int print_command(Command cmd);
 Process process_command(Command cmd, Process procs);

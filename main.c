@@ -43,10 +43,11 @@ int main(void) {
 
         procs = process_command(curr_cmd, procs);
 
-        free(curr_cmd); // Free memory before parsing another command.
+        // Free memory before parsing another command.
+        free_command(curr_cmd);
     }
 
-    return EXIT_SUCCESS;
+    exit(EXIT_SUCCESS);
 }
 
 /**

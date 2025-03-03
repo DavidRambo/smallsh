@@ -354,3 +354,12 @@ int redirect_out(char *outfile) {
 
     return 0;
 }
+
+void free_command(Command cmd) {
+    for (int argc = 0; argc < cmd->argc; argc++) {
+        free(cmd->argv[argc]);
+    }
+    free(cmd->in_file);
+    free(cmd->out_file);
+    free(cmd);
+}
