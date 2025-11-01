@@ -1,7 +1,6 @@
 #include "commands.h"
 #include "processes.h"
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
